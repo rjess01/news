@@ -1,18 +1,19 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField()
     author = models.ForeignKey(
-        "auth.User",
+        get_user_model(),
         on_delete=models.CASCADE,
     )
-
-    body = models.TextField()
+    date = models.DateField(auto_now_add=True)
+    image = models.TextField()
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('')
+        return reverse('article_detail', args=[self.id])

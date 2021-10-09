@@ -1,40 +1,41 @@
-from django.views.generic import (
-    ListView,
-    DetailView
-)
-from django.views.generic.edit import (
-    CreateView, 
-    UpdateView, 
-    DeleteView,
-)
-from .models import Home
+from django.views.generic import ListView, DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from .models import Article
+from django.urls import reverse_lazy
+
 
 class ArticleListView(ListView):
-    model = Post
-    template_name = "home.html"
+    model = Article
+    template_name = "article_list.html"
 
+class ArticleDetailView(DetailView):
+    model = Article
+    template_name = "article_detail.html"
 
-class BlogDetailView(DetailView):
-    model = Post
-    template_name = "post_detail.html"
+class ArticleCreateView(LoginRequiredMixin, CreateView):
+    model = Article
+    template_name = "article_new.html"
+    fields = ["title", "body", "image"]
 
-class BlogCreateView(CreateView):
-    model = Post
-    template_name = "post_new.html"
-    fields = ["title", "author", "body"]
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 
-class BlogUpdateView(UpdateView):
-    model = Post
-    template_name = "post_edit.html"
-    fields = ["title", "body"]
+class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Article
+    template_name = "article_edit.html"
+    fields = ["title", "body", "image"]
 
-class BlogDeleteView(DeleteView):
-    model = Post
-    template_name = "post_delete.html"
+    def test_func(self):
+        obj = self.get_object()
+        return obj.author == self.request.user
+
+class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Article
+    template_name = "article_delete.html"
     success_url = reverse_lazy("home")
 
-class SignUpView(CreateView):
-    form_class = UserCreationForm
-    success_url = reverse_lazy("login")
-    template_name = "registration/signup.html"
-
+    def test_func(self):
+        obj = self.get_object()
+        return obj.author == self.request.user
